@@ -1,0 +1,243 @@
+\documentclass{article}
+\usepackage{ctex}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+
+% 压缩列表间距
+\setlist[itemize]{nosep, leftmargin=1.5em}
+
+% 压缩公式间距
+\setlength{\abovedisplayskip}{3pt}
+\setlength{\belowdisplayskip}{3pt}
+
+\begin{document}
+
+\begin{tcolorbox}[
+  width=\textwidth,
+  colframe=black,
+  colback=white,
+  sharp corners,
+  boxsep=2pt,
+  left=2pt,right=2pt,top=3pt,bottom=3pt
+]
+
+
+
+\textbf{协议1：Galois环上的多项式承诺协议}
+
+\begin{itemize}
+  \item \textbf{Commit 阶段}
+  \begin{itemize}
+    \item \textbf{证明者}：将多线性多项式\( f \)的系数组织成 \( 2^{L/2} \times 2^{L/2} \) 的矩阵 \( U \)。设 \( m = 2^{L/2} \)。对矩阵\( U \)的每一行使用 \( k \)-\( [tm,m, d ]\) 编码获得矩阵 \( \hat{U} \)，其中编码后的每一行 \( \hat{U}_i \in \mathrm{GR}(p^s, kr)^{tm/k} ,i=1,\ldots,m\)。且 \( \hat{U}_i[j] \) 表示矩阵 \( \hat{U} \) 中第 \( i \) 行、第 \( j \) 列的元素。证明者对矩阵 \( \hat{U} \)按列构造一个 Merkle 树，将 Merkle 根作为承诺发送给验证者。
+  \end{itemize}
+  
+  \item \textbf{Testing 阶段}
+  \begin{itemize}
+    \item \textbf{验证者}: 将随机矩阵 \( R \in (\mathrm{GR}(p^s, r))^{k \times m} \)发送给证明者，其中 \( R \) 的每个元素从 \( \mathrm{GR}(p^s, r) \) 中随机选择。
+    
+    \item \textbf{证明者}: 将矩阵 \( U \) 每行中每 \( k \) 个相邻元素视为 \( \mathrm{GR}(p^s, kr) \) 中的元素，计算
+    \(V = RU \in \mathrm{GR}(p^s, kr)^{k(m/k)},\)
+    并声明 \( V = RU \)，然后发送给验证者。
+    
+    \item \textbf{验证者}: 选择随机集合 \( Q \)，满足 \( |Q| = \Theta(\lambda) \)，且 \( Q \subseteq [tm/k] \)。对每个 \( j \in Q \)：
+    \begin{itemize}
+      \item 验证者向证明者查询对应该列的所有 \( m \) 个条目：\( \hat{U}_1[j], \dots, \hat{U}_m[j] \)。验证者接收这些值和相应的 Merkle 树路径。如果路径无效，则拒绝。 \item 对于矩阵 \( V \) 的每一行 \( V_i \)，验证者确认 \( \sum_{s=1}^{m} R_i[s] \cdot \hat{U}_i[j] = Enc(V_i)[j] \)，如果条件不满足则拒绝。
+    \end{itemize}
+  \end{itemize}
+  
+  \item \textbf{Evaluation 阶段}
+  \begin{itemize}
+    \item \textbf{验证者}: 计算 \( \mathbf{q_1} = (1-r_1, r_1) \otimes \dots \otimes (1-r_{L/2}, r_{L/2}) \in \text{GR}(p^s, r)^m \) 和 \( \mathbf{q_2} = (1-r_{L/2+1}, r_{L/2+1}) \otimes \dots \otimes (1-r_l, r_l) \in \text{GR}(p^s, r)^m \)。重复与Testing 阶段类似步骤，不同之处在于将随机矩阵 \( R \) 替换为 \( \mathbf{q_1} \) 以获得 \( \mathbf{v} =\mathbf{q_1}U\)。最终，如果所有验证通过，验证者计算并得到 \( f(r_1, \dots, r_L) = \langle\mathbf{v}, \mathbf{q_2}\rangle \)。
+  \end{itemize}
+
+\end{itemize}
+\end{tcolorbox}
+
+\begin{tcolorbox}[
+  width=\textwidth,
+  colframe=black,
+  colback=white,
+  sharp corners,
+  boxsep=2pt,
+  left=2pt,right=2pt,top=3pt,bottom=3pt
+]
+
+\textbf{协议2：分布式 Merkle 承诺协议}
+
+\begin{itemize}
+
+  \item \textbf{本地编码}
+  \begin{itemize}
+    \item 一共\( N \)个证明者节点，每个节点 \( P_i \) 持有 
+    \( {U}^{(i)} \in \mathrm{GR}(p^s, r)^{m'\times m} \)，
+    其中 \( m' = m/N ,i=1,\ldots,N\)。
+    每个节点 \( P_i \) 并行计算：
+    \begin{itemize}
+      \item 
+      \(\hat{U}^{(i)} = \mathrm{Enc}({U}^{(i)}) \in \mathrm{GR}(p^s, r)^{m'\times tm} \)
+      
+      \item  
+      \(h_j^{(i)} = H\big(\hat{U}_j^{(i)}\big),j = 1, \dots, tm\)
+      
+    \end{itemize}
+   
+  \end{itemize}
+
+  \item \textbf{哈希交换}
+  \begin{itemize}
+    \item 每个节点 \( P_i \) 将计算得到的哈希 
+    \(\{h_j^{(i)}:j=\frac{tm}{N}\cdot (e-1)+1,\ldots,\frac{tm}{N}\cdot e\}\) 
+    发送给对应证明节点 \( P_e,e=1,\ldots,N\)。
+  
+  \end{itemize}
+
+  \item \textbf{哈希聚合}
+  \begin{itemize}
+    \item 每个节点 \( P_i \) 根据收到的哈希计算完整列哈希 
+    \(h[j]=(h_j^{(1)},\ldots,h_j^{(N)}),j=\frac{tm}{N}\cdot (i-1)+1,\ldots,\frac{tm}{N}\cdot i\)，并建立局部 Merkle 树，将局部 Merkle 根 \(C^{(i)}\)发送给主导节点 \(P_{1}\)。
+
+    \item  \(P_{1}\)聚合局部 Merkle 根得到最终 Merkle 承诺\(C^{*}\) 发送给验证者。
+  
+  \end{itemize}
+
+
+\end{itemize}
+
+\end{tcolorbox}
+
+
+\begin{tcolorbox}[
+  width=\textwidth,
+  colframe=black,
+  colback=white,
+  sharp corners,
+  boxsep=2pt,
+  left=2pt,right=2pt,top=3pt,bottom=3pt
+]
+
+
+\textbf{协议3：分布式查询协议}
+\begin{itemize}
+    
+    \item \textbf{查询请求}
+    \begin{itemize}
+      \item 验证者随机选取列索引集合$Q \subseteq [tm]$发送给主导证明节点 \(P_{1}\)。
+    \end{itemize}
+
+    \item \textbf{Merkle路径收集}
+    \begin{itemize}
+      \item 对于每个查询索引$j \in Q$：
+      \begin{itemize}
+      \item 每个节点$P_i$将$\hat{U}_j^{(i)} \in \mathrm{GR}(p^s, r)^{m'}$ 发送给主导节点$P_1$
+      \item 确定该列索引所属的局部Merkle树管理节点$P_e$，其中$e = \lceil jN/(tm) \rceil$。节点$P_e$计算从叶节点$h[j]$到局部根$C^{(e)}$的Merkle路径$\pi_j^{\text{local}}$，并发送给主导节点$P_1$
+      \item 主导节点$P_1$计算从$C^{(e)}$到$C^*$的Merkle路径$\pi_e^{\text{global}}$
+      \end{itemize}
+    \end{itemize}
+
+    \item \textbf{响应聚合与发送}
+    \begin{itemize}
+      \item 主导节点$P_1$将以下信息汇总后发送给验证者：
+      \begin{itemize}
+        \item 完整列数据：$\hat{U}_j = (\hat{U}_j^{(1)}, \ldots, \hat{U}_j^{(N)})^T$，对于所有$j \in Q$
+        \item 完整Merkle路径：$\pi_j = (\pi_j^{\text{local}}, \pi_e^{\text{global}})$，对于所有$j \in Q$
+      \end{itemize}
+    \end{itemize}
+
+    \item \textbf{验证者验证}
+    \begin{itemize}
+      \item 对于每个$j \in Q$，验证者执行以下检验：
+      \begin{itemize}
+        \item 计算列哈希$h[j] = (H(\hat{U}_j^{(1)}), \ldots, H(\hat{U}_j^{(N)}))$
+        \item 验证Merkle 路径$\pi_j$从$h[j]$正确通向全局根$C^*$
+      \end{itemize}
+      \item 若所有验证通过，则接受；否则拒绝。
+    \end{itemize}
+
+  
+  \end{itemize}
+
+\end{tcolorbox}
+
+\begin{tcolorbox}[
+  width=\textwidth,
+  colframe=black,
+  colback=white,
+  sharp corners,
+  boxsep=2pt,
+  left=2pt,right=2pt,top=3pt,bottom=3pt
+]
+
+
+\textbf{协议4：分布式线性组合协议}
+\begin{itemize}
+
+    \item \textbf{挑战分发}
+    \begin{itemize}
+      \item 验证者生成随机矩阵$R \in \mathrm{GR}(p^s, r)^{k\times m}$发送给主导证明节点
+      \(P_1\)。
+      \item \(P_1\)将\(R\)按列分块$R^{(i)} \in \mathrm{GR}(p^s, r)^{m\times m'}$发送给\(P_i\)。
+    \end{itemize}
+
+    \item \textbf{本地线性组合}
+    \begin{itemize}
+      \item 每个节点$P_i$并行计算本地线性组合：
+      \begin{itemize}
+        \item $V^{(i)} =R^{(i)} \cdot U^{(i)} \in \mathrm{GR}(p^s, r)^{m\times m}$
+      \end{itemize}
+    \end{itemize}
+
+     \item \textbf{结果聚合}
+    \begin{itemize}
+      \item 设$N = 2^e$，共进行$e$轮聚合。
+      \item 第$k$轮（$k = 1, \ldots, e$）：对于$i = 1, \ldots, 2^{e-k}$，节点$P_{i+2^{e-k}}$将其部分结果$V^{(i+2^{e-k})}$发送给节点$P_i$，节点$P_i$执行累加：
+      \begin{itemize}
+        \item $V^{(i)} \gets V^{(i)} + V^{(i+2^{e-k})}$
+      \end{itemize}
+      \item 最终结果$V$汇聚到主导节点$P_1$，并发送给验证者。
+    \end{itemize}
+  
+\end{itemize}
+
+\end{tcolorbox}
+
+\begin{tcolorbox}[
+  width=\textwidth,
+  colframe=black,
+  colback=white,
+  sharp corners,
+  boxsep=2pt,
+  left=2pt,right=2pt,top=3pt,bottom=3pt
+]
+
+\textbf{协议5：Galois环上的分布式多项式承诺协议}
+
+\begin{itemize}
+  \item \textbf{Commit 阶段}
+  \begin{itemize}
+    \item 一共\( N \)个证明者节点，每个节点 \( P_i \) 持有 
+    \( {U}^{(i)} \in \mathrm{GR}(p^s, r)^{m'\times m} \)，
+    其中 \( m' = m/N ,i=1,\ldots,N\)。所有证明节点执行协议2生成Merkle 承诺\(C^{*}\)发送给验证者 。
+  \end{itemize}
+  
+  \item \textbf{Testing 阶段}
+  \begin{itemize}
+    \item 验证者和所有证明节点执行协议4，验证者得到线性组合结果\(V\)。
+    
+    \item 验证者选择随机集合  \( Q \subseteq [tm/k] \)，满足 \( |Q| = \Theta(\lambda) \)。对每个 \( j \in Q \)：
+    \begin{itemize}
+      \item 验证者执行协议3，进行分布式查询。 
+      \item 对于矩阵 \( V \) 的每一行 \( V_i \)，验证者确认 \( \sum_{s=1}^{m} R_i[s] \cdot \hat{U}_i[j] = Enc(V_i)[j] \)，如果条件不满足则拒绝。
+    \end{itemize}
+  \end{itemize}
+  
+  \item \textbf{Evaluation 阶段}
+  \begin{itemize}
+    \item \textbf{验证者}: 计算 \( \mathbf{q_1} = (1-r_1, r_1) \otimes \dots \otimes (1-r_{L/2}, r_{L/2}) \in \text{GR}(p^s, r)^m \) 和 \( \mathbf{q_2} = (1-r_{L/2+1}, r_{L/2+1}) \otimes \dots \otimes (1-r_l, r_l) \in \text{GR}(p^s, r)^m \)。重复与Testing 阶段类似步骤，不同之处在于将随机矩阵 \( R \) 替换为 \( \mathbf{q_1} \) 以获得 \( \mathbf{v} =\mathbf{q_1}U\)。最终，如果所有验证通过，验证者计算并得到 \( f(r_1, \dots, r_L) = \langle\mathbf{v}, \mathbf{q_2}\rangle \)。
+  \end{itemize}
+
+\end{itemize}
+\end{tcolorbox}
+
+\end{document}
